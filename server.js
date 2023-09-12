@@ -22,7 +22,7 @@ mongoose.set("strictQuery", true);
 
 const serverAddress =
   process.env.NODE_ENV == "development"
-    ? "https://localhost:5173"
+    ? "http://localhost:5173"
     : "https://gigster.netlify.app";
 
 const connect = async () => {
