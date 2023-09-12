@@ -33,12 +33,8 @@ export const login = async (req, res, next) => {
       },
       process.env.JWT_KEY
     );
-    console.log("created token is -->", token);
     const { password, ...info } = user._doc;
     res.status(200).send({ ...info, accessToken: token });
-
-    console.log("aceestoken stored successfully");
-    console.log("info is -->", info);
   } catch (err) {
     res.status(500).send({ message: "cant store jwt token in cookies" });
   }

@@ -1,9 +1,11 @@
 import express, { json } from "express";
-// import router from './user.route';
-// const stripe = require('stripe')(process.env.STRIPE);
+
 import Stripe from "stripe";
-// import {stripe} from {stripe}
-// const app = express();
+const serverAddress =
+  process.env.NODE_ENV == "development"
+    ? "http://localhost:5173"
+    : "https://gigster.netlify.app";
+
 const router = express.Router();
 
 // app.use(json());
@@ -20,9 +22,9 @@ export const successController = async (req, res, next) => {
         },
       ],
       mode: "payment",
-      success_url: "https://gigster.netlify.app",
+      success_url: `${serverAddress}/success`,
+      // http://localhost:5173/success
     });
-    console.log("******************", res);
     // res.json({ sessionId: session.id });
     res.json({ url: session.url });
   } catch (error) {

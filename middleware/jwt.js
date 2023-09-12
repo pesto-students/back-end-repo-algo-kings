@@ -9,7 +9,6 @@ export const verifyToken = (req, res, next) => {
   if (authHeader) {
     const token = authHeader.split(" ")[1];
     req.token = token;
-    console.log("acessToken ",token);
   }
   // if (!token) return next(createError(401, "You are not authenticated"));
   if (!req.token) {

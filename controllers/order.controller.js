@@ -3,6 +3,52 @@ import Order from "../models/order.model.js";
 import Gig from "../models/gig.model.js";
 import Stripe from "stripe";
 
+export const createOrder = async (req, res, next) => {
+  try {
+    const gig = await Gig.findById(req.params.gigId);
+    const existingOrder = await Order.findOne({ gigId: gig._id });
+
+    if (existingOrder) {
+      // Handle the case where an order with the same gigId already exists
+      // You can either update the existing order or return an error message
+      // existingOrder.payment_intent = paymentIntent.id;
+      // await existingOrder.save();
+      // return res.status(200).send({
+      //   clientSecret: paymentIntent.client_secret,
+      //   message: "Order updated successfully.",
+      // });
+
+      throw createError(400, "An order with the same gigId already exists.");
+    }
+    const stripe = new Stripe(process.env.STRIPE);
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: gig.price * 100,
+      currency: "inr",
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    const newOrder = new Order({
+      gigId: gig._id,
+      img: gig.cover,
+      title: gig.title,
+      buyerId: req.body.buyerId,
+      sellerId: gig.userId,
+      price: gig.price,
+      payment_intent: paymentIntent.id,
+    });
+    await newOrder.save();
+    const payment_intent_id = paymentIntent.id;
+    res.status(200).send({
+      paymentIntentId: payment_intent_id,
+    });
+  } catch (err) {
+    console.log("order not created");
+    next(err);
+  }
+};
+
 export const intent = async (req, res, next) => {
   try {
     const stripe = new Stripe(process.env.STRIPE);
@@ -16,7 +62,6 @@ export const intent = async (req, res, next) => {
         enabled: true,
       },
     });
-    console.log("hello guys");
 
     const existingOrder = await Order.findOne({ gigId: gig._id });
 
@@ -44,9 +89,8 @@ export const intent = async (req, res, next) => {
     });
     // stripe checkout session
     await newOrder.save();
-
     res.status(200).send({
-      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: newOrder.payment_intent,
     });
   } catch (err) {
     next(err);
