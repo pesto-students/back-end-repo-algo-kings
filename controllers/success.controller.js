@@ -12,18 +12,17 @@ const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE);
 
 export const successController = async (req, res, next) => {
-  //   const { items } = req.body; // Items you want to include in the checkout
+  const bodyData = JSON.parse(req.body.body);
+
+  const { payment_intent, items } = bodyData;
+  console.log("request body is -->", req.body);
+  // console.log("line items are->", items);
+  // console.log("payment_intent is -->", payment_intent);
   try {
     const session = await stripe.checkout.sessions.create({
-      line_items: [
-        {
-          price: "price_1NjmAlSFwnpGRs91N78Q2OaL",
-          quantity: 1,
-        },
-      ],
+      line_items: items,
       mode: "payment",
-      success_url: `${serverAddress}/success`,
-      // http://localhost:5173/success
+      success_url: `${serverAddress}/success?payment_intent=${payment_intent}`,
     });
     // res.json({ sessionId: session.id });
     res.json({ url: session.url });

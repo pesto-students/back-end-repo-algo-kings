@@ -7,19 +7,6 @@ export const createOrder = async (req, res, next) => {
   try {
     const gig = await Gig.findById(req.params.gigId);
     const existingOrder = await Order.findOne({ gigId: gig._id });
-
-    if (existingOrder) {
-      // Handle the case where an order with the same gigId already exists
-      // You can either update the existing order or return an error message
-      // existingOrder.payment_intent = paymentIntent.id;
-      // await existingOrder.save();
-      // return res.status(200).send({
-      //   clientSecret: paymentIntent.client_secret,
-      //   message: "Order updated successfully.",
-      // });
-
-      throw createError(400, "An order with the same gigId already exists.");
-    }
     const stripe = new Stripe(process.env.STRIPE);
     const paymentIntent = await stripe.paymentIntents.create({
       amount: gig.price * 100,
@@ -28,6 +15,17 @@ export const createOrder = async (req, res, next) => {
         enabled: true,
       },
     });
+
+    if (existingOrder) {
+      if (existingOrder.isCompleted == true) {
+        throw new Error("You have already placed an order for this gig");
+      }
+      existingOrder.payment_intent = paymentIntent.id;
+      await existingOrder.save();
+      return res.status(200).send({
+        message: "Order updated successfully.",
+      });
+    }
 
     const newOrder = new Order({
       gigId: gig._id,
@@ -68,14 +66,11 @@ export const intent = async (req, res, next) => {
     if (existingOrder) {
       // Handle the case where an order with the same gigId already exists
       // You can either update the existing order or return an error message
-      // existingOrder.payment_intent = paymentIntent.id;
-      // await existingOrder.save();
-      // return res.status(200).send({
-      //   clientSecret: paymentIntent.client_secret,
-      //   message: "Order updated successfully.",
-      // });
-
-      throw createError(400, "An order with the same gigId already exists.");
+      existingOrder.payment_intent = paymentIntent.id;
+      await existingOrder.save();
+      return res.status(200).send({
+        message: "Order updated successfully.",
+      });
     }
 
     const newOrder = new Order({
